@@ -1,4 +1,9 @@
 
+import re
+import numpy as np
+import pandas as pd
+#words_to_ignore = ['*Off-screen', '*Blink']
+
 def get_special_characters(words):
     special_chars = set()  # Using a set to avoid duplicates
 
@@ -16,16 +21,20 @@ def get_special_characters(words):
 
 
 
-def remove_special_characters(words):
-    cleaned_text_list = []
+def remove_special_characters(words, words_to_ignore):
+    clean_text_list = []
 
-    for word in words:
-        if word in words_to_ignore:
-            cleaned_text_list.append((word, '-99'))
+    for word in words.values:  
+        if pd.isna(word):  # if the word is NaN
+            clean_text_list.append((np.nan, 0))  # Return 0 
+        elif word in words_to_ignore:
+            clean_text_list.append((word, '-99'))
         else:
             # Remove special characters within words except ' and - and \x9c
-            cleaned_text = re.sub(r"(?<![\w\x9c'-])[^\w\s\x9c'-]+|[^\w\s\x9c'-](?![\w\x9c'-])|^'|'$", '', word)
-            removed_chars = re.findall(r"(?<![\w\x9c'-])[^\w\s\x9c'-]+|[^\w\s\x9c'-](?![\w\x9c'-])|^'|'$", word)
-            cleaned_text_list.append((cleaned_text, removed_chars))
+            cleaned_text = re.sub(r"(?<![\w\x9c'-])[^\w\s\x9c'-]+|[^\w\s\x9c'-](?![\w\x9c'-])|^'|'$", '', str(word)) 
+            removed_chars = re.findall(r"(?<![\w\x9c'-])[^\w\s\x9c'-]+|[^\w\s\x9c'-](?![\w\x9c'-])|^'|'$", str(word))  
+            
+            # Append 0 if no special characters found, otherwise append the removed special characters
+            clean_text_list.append((cleaned_text, 0 if not removed_chars else removed_chars))
 
-    return cleaned_text_list
+    return clean_text_list

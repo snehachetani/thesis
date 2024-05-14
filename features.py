@@ -1,6 +1,9 @@
+from transformers import GPT2Tokenizer, GPT2Model
+tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+
 
 # splitting words into subwords using GPT-small
-def tokenize_words_into_subwords(words):
+def tokenize_words_into_subwords(words, words_to_ignore):
   subword_list = []
   makeup_word_list = []
   for word in words:
@@ -19,7 +22,7 @@ def tokenize_words_into_subwords(words):
 
 
  # number of sub-words  and the length of each sub-word
-def calculate_subword_info(subwords, wnum):
+def calculate_subword_info(subwords, wnum, words_to_ignore):
   num_subwords = []
   subword_lengths = []
   subword_infos = []            # subword position within a subword ('un', 'believable') --> (1-1, 1-2)
@@ -32,7 +35,7 @@ def calculate_subword_info(subwords, wnum):
       subword_length = [len(sub) for sub in sw]       # length of each subword
       subword_lengths.append(subword_length)
     #print(subword_length)
-  for i, sw in enumerate(subwords, 1):           # Enumerate over subwords - word and its index starting from 1
+  for i, sw in enumerate(subwords):           # Enumerate over subwords - word and its index starting from 1
     if sw in words_to_ignore:
       subword_infos.append(-99)
     else:
@@ -44,51 +47,46 @@ def calculate_subword_info(subwords, wnum):
 
 
 ## Gaze landed within the fixated sub-word
-def gaze_landed_on_subwords(cleaned_subwords, wdlp):
-  char_fixated = []
-  which_subpart = []
-  within_subword = []
+def gaze_landed_on_subwords(cleaned_subwords, wdlp, words_to_ignore):
+    char_fixated = []
+    which_subpart = []
+    within_subword = []
 
-  for k, subword in enumerate(cleaned_subwords, 1):
-    cumulative_length = 0
-    zero_appended = False
+    for idx, subword in enumerate(cleaned_subwords, 1):
+        cumulative_length = 0
 
-    # Handling the case when subword is in words_to_ignore and wdlp is -99
-    if subword in words_to_ignore and int(wdlp[k-1]) == -99:
-      char_fixated.append(-99)
-      which_subpart.append(-99)
-      within_subword.append(-99)
-    else:
-      subword_char_fixated = []
-      subword_which_subpart = []
-      subword_within_subword = []
-
-      for i, j in enumerate(subword, 1):
-        offset = cumulative_length
-        cumulative_length += len(j)
-
-        if int(wdlp[k-1]) == 0 :              #and not zero_appended
-          subword_char_fixated.append(0)
-          subword_which_subpart.append(0)
-          subword_within_subword.append(0)
-          #zero_appended = True
+        if subword in words_to_ignore and int(wdlp[idx-1]) == -99:
+            char_fixated.append(-99)
+            which_subpart.append(-99)
+            within_subword.append(-99)
         else:
-          if int(wdlp[k-1]) <= cumulative_length:
-            wdlp_value = int(wdlp[k-1]) - offset
-            #print("wdlp_value:", wdlp_value)
-            #print("j:", j)
-            if wdlp_value <= len(j):          # and wdlp_value > 0
-              sw = j[wdlp_value - 1 ]
-              subword_char_fixated.append(sw)
-              subword_which_subpart.append(j)
-              subword_within_subword.append(wdlp_value)
-              break
-            else:
-              print("Error: WDLP exceeds subword boundaries.")
+            subword_char_fixated = []
+            subword_which_subpart = []
+            subword_within_subword = []
 
-      char_fixated.append(subword_char_fixated)
-      which_subpart.append(subword_which_subpart)
-      within_subword.append(subword_within_subword)
+            for _, char in enumerate(subword, 1):
+                offset = cumulative_length
+                cumulative_length += len(char)
+                try:
+                    if int(wdlp[idx-1]) == 0:
+                        subword_char_fixated.append(0)
+                        subword_which_subpart.append(0)
+                        subword_within_subword.append(0)
+                    else:
+                        if int(wdlp[idx-1]) <= cumulative_length:
+                            wdlp_value = int(wdlp[idx-1]) - offset
+                            if wdlp_value <= len(char) and wdlp_value > 0:
+                                sw = char[wdlp_value - 1]
+                                subword_char_fixated.append(sw)
+                                subword_which_subpart.append(char)
+                                subword_within_subword.append(wdlp_value)
+                                break
+                except IndexError:
+                    print(f"Error: WDLP exceeds subword boundaries. Index: {idx-1}, WDLP: {wdlp[idx-1]}, Subword: {subword}")
 
+            char_fixated.append(subword_char_fixated)
+            which_subpart.append(subword_which_subpart)
+            within_subword.append(subword_within_subword)
 
-  return char_fixated, which_subpart, within_subword
+    return char_fixated, which_subpart, within_subword
+
