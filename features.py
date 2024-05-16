@@ -90,3 +90,22 @@ def gaze_landed_on_subwords(cleaned_subwords, wdlp, words_to_ignore):
 
     return char_fixated, which_subpart, within_subword
 
+
+
+def filter_and_remove_duplicates(words, fxon, txfr, wnum):
+    result_words = []
+    result_fxon = []
+    result_txfr = []
+    result_wnum = []
+    prev_word = None
+
+    for word, fxon_value, txfr_value, wnum_value in zip(words, fxon, txfr, wnum):
+        #if fxon_value != '0':
+            if word != prev_word:
+                result_words.append(word)
+                result_fxon.append(int(fxon_value))
+                result_txfr.append(int(txfr_value))
+                result_wnum.append(int(wnum_value))
+                prev_word = word
+
+    return result_words, result_fxon, result_txfr, result_wnum

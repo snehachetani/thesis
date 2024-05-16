@@ -4,6 +4,8 @@
 
 *.zip
 *.docx
-dundee_corpus
+dundee_corpus/
 Research Statement/
 Papers/
+raw_text_file/
+surprisal/

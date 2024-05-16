@@ -24,7 +24,7 @@ def get_special_characters(words):
 def remove_special_characters(words, words_to_ignore):
     clean_text_list = []
 
-    for word in words.values:  
+    for word in words:  
         if pd.isna(word):  # if the word is NaN
             clean_text_list.append((np.nan, 0))  # Return 0 
         elif word in words_to_ignore:
